@@ -86,10 +86,9 @@ def query_shape(input_shape: torch.Tensor, data_matrix, top_k, model):
     input_shape = input_shape.unsqueeze(0)
     input_code = model[0](input_shape)[0]
     database_codes = model[0](data_matrix)
-    cos_distances = torch.dot(database_codes, input_code)
+    cos_distances = torch.mv(database_codes, input_code)
 
     ordered_indices = torch.argsort(cos_distances, descending = True)
-    print(ordered_indices)
     return ordered_indices[:top_k]
 
 def caculate_query_acc(input_shapes : torch.Tensor, data_matrix : torch.Tensor,
@@ -110,17 +109,17 @@ if __name__ == "__main__":
     ### training data
     f = h5py.File('./data/train_data.h5')
     data_train = f['data'][:]  ### [9840, 2048, 3]
-    X = torch.from_numpy(data_train[:128]).float()
+    X = torch.from_numpy(data_train).float()
 
     #### testing data + query data
     f = h5py.File('./data/test_data.h5')
     data_test = f['data'][:]  ###
-    data_test = torch.from_numpy(data_test).float()
+    data_test = torch.from_numpy(data_test).float().to(device)
     label_test = f['label']
 
     f = h5py.File('./data/query_data.h5')
     data_query = f['data'][:]  ###
-    data_query = torch.from_numpy(data_query).float()
+    data_query = torch.from_numpy(data_query).float().to(device)
     label_query = f['label']
 
     model = config.current_model.to(device)
