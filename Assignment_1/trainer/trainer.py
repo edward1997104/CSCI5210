@@ -14,7 +14,7 @@ def train_model(
           model : nn.Module,
           debugger: MyDebugger,
           X : torch.Tensor,
-          lr : float = 5e-3 ,
+          lr : float = 1e-3 ,
           batch_size  : int = 32,
           training_epoch : int =200 ,
           model_saving_epoch : int = 20,
@@ -56,7 +56,7 @@ def train_model(
 
         print(f"loss for epoch {epoch} : {np.mean(training_losses)}")
 
-        if epoch % model_saving_epoch == 0:
+        if (epoch+1) % model_saving_epoch == 0:
             save_dir = debugger.file_path('models')
             if not os.path.isdir(save_dir):
                 os.mkdir(save_dir)
