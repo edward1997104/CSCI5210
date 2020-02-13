@@ -5,6 +5,8 @@ import torch.nn as nn
 encoder_layers = [64, 128, 128, 256, 128]
 decoder_layers = [256, 256]
 activation = nn.ReLU()
+loss_fn = nn.MSELoss(reduce=True, size_average=True)
+
 
 current_model = nn.Sequential(
     PointNet_Encoder(layers = encoder_layers,

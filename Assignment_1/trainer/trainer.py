@@ -12,6 +12,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def train_model(
           model : nn.Module,
+          loss_fn,
           debugger: MyDebugger,
           X : torch.Tensor,
           lr : float = 1e-3 ,
@@ -24,8 +25,6 @@ def train_model(
 
     #### optimizer
     optimizer =  optimizer_type(model.parameters(), lr = lr)
-
-    loss_fn = nn.MSELoss(reduce=True, size_average=True)
 
     ###### REFERENCE CODE from https://morvanzhou.github.io/tutorials/machine-learning/torch/3-05-train-on-batch/
 
@@ -52,7 +51,7 @@ def train_model(
             training_losses.append(loss.cpu().detach().numpy())
             optimizer.step()
 
-            print(f"loss for epoch {epoch} stpe {step} : {loss.item()}")
+            # print(f"loss for epoch {epoch} stpe {step} : {loss.item()}")
 
         print(f"loss for epoch {epoch} : {np.mean(training_losses)}")
 
@@ -76,8 +75,10 @@ if __name__ == "__main__":
     X = torch.from_numpy(data_train).float()
 
     model = config.current_model.to(device)
+    loss_fn = config.loss_fn
 
 
     train_model(model = model,
                 debugger = debugger,
+                loss_fn = loss_fn,
                 X = X)
