@@ -7,6 +7,9 @@ from util.debugger import MyDebugger
 from torch.optim import Adam, Optimizer
 from inputs import config
 import h5py
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 def train_model(
           model : nn.Module,
           debugger: MyDebugger,
@@ -15,7 +18,7 @@ def train_model(
           batch_size  : int = 32,
           training_epoch : int =200 ,
           model_saving_epoch : int = 20,
-          data_loading_workers : int = 2,
+          data_loading_workers : int = 4,
           optimizer_type = Adam):
     print("Training Start!!!", flush=True)
 
@@ -41,6 +44,7 @@ def train_model(
         for step, (batch_x, batch_y) in enumerate(loader):
 
             #### training
+            batch_x = batch_x.to(device)
             optimizer.zero_grad()
             batch_x_reconstructed = model(batch_x)
             loss = loss_fn(batch_x_reconstructed, batch_x)
@@ -48,7 +52,7 @@ def train_model(
             training_losses.append(loss.cpu().detach().numpy())
             optimizer.step()
 
-            # print(f"loss for epoch {epoch} stpe {step} : {loss.item()}")
+            print(f"loss for epoch {epoch} stpe {step} : {loss.item()}")
 
         print(f"loss for epoch {epoch} : {np.mean(training_losses)}")
 
@@ -63,17 +67,15 @@ def train_model(
 
     print("Training Done!!!")
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 if __name__ == "__main__":
 
-    debugger = MyDebugger('training_points_autoencoder', save_print_to_file =False)
+    debugger = MyDebugger('training_points_autoencoder', save_print_to_file =True)
     f = h5py.File('./data/train_data.h5')
     data_train = f['data'][:]  ### [9840, 2048, 3]
 
-    X = torch.from_numpy(data_train).float().to(device)
+    X = torch.from_numpy(data_train).float()
 
-    model = config.current_model
+    model = config.current_model.to(device)
 
 
     train_model(model = model,
