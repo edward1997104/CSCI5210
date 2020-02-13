@@ -14,7 +14,11 @@ def train_model(
           model : nn.Module,
           loss_fn,
           debugger: MyDebugger,
-          X : torch.Tensor,
+          data_train : torch.Tensor,
+          data_test : torch.Tensor,
+          label_test : np.array,
+          data_query : torch.Tensor,
+          label_query : np.array,
           lr : float = 1e-3 ,
           batch_size  : int = 32,
           training_epoch : int =200 ,
@@ -28,7 +32,7 @@ def train_model(
 
     ###### REFERENCE CODE from https://morvanzhou.github.io/tutorials/machine-learning/torch/3-05-train-on-batch/
 
-    torch_dataset = Data.TensorDataset(X, X)
+    torch_dataset = Data.TensorDataset(data_train, data_train)
 
     loader = Data.DataLoader(
         dataset=torch_dataset,  # torch TensorDataset format
@@ -61,24 +65,75 @@ def train_model(
                 os.mkdir(save_dir)
             torch.save(model, os.path.join(save_dir, f'{epoch}_model.pth'))
 
+            query_acc = caculate_query_acc(input_shapes = data_query,
+                                           data_matrix = data_test,
+                                           top_k = config.top_k,
+                                           model = model,
+                                           input_shapes_labels = label_query,
+                                           data_labels = label_test)
+
+            print(f"average query acc : {query_acc}")
+
+
+
 
 
 
     print("Training Done!!!")
 
+def query_shape(input_shape: torch.Tensor, data_matrix, top_k, model):
+
+    input_shape = input_shape.unsqueeze(0)
+    input_code = model[0](input_shape)[0]
+    database_codes = model[0](data_matrix)
+    cos_distances = torch.dot(database_codes, input_code)
+
+    ordered_indices = torch.argsort(cos_distances, descending = True)
+    print(ordered_indices)
+    return ordered_indices[:top_k]
+
+def caculate_query_acc(input_shapes : torch.Tensor, data_matrix : torch.Tensor,
+                       top_k : int, model : torch.nn.Module, input_shapes_labels : np.array,
+                       data_labels : np.array):
+
+    accs = []
+    for i in range(input_shapes.size(0)):
+        queried_indices = query_shape(input_shapes[i], data_matrix, top_k, model)
+        acc = np.mean([input_shapes_labels[i] == data_labels[idx] for idx in queried_indices])
+        accs.append(acc)
+
+    return np.mean(accs)
 if __name__ == "__main__":
 
     debugger = MyDebugger('training_points_autoencoder', save_print_to_file = config.save_print_to_file)
+
+    ### training data
     f = h5py.File('./data/train_data.h5')
     data_train = f['data'][:]  ### [9840, 2048, 3]
+    X = torch.from_numpy(data_train[:128]).float()
 
-    X = torch.from_numpy(data_train).float()
+    #### testing data + query data
+    f = h5py.File('./data/test_data.h5')
+    data_test = f['data'][:]  ###
+    data_test = torch.from_numpy(data_test).float()
+    label_test = f['label']
+
+    f = h5py.File('./data/query_data.h5')
+    data_query = f['data'][:]  ###
+    data_query = torch.from_numpy(data_query).float()
+    label_query = f['label']
 
     model = config.current_model.to(device)
     loss_fn = config.loss_fn
 
-
+    print
     train_model(model = model,
                 debugger = debugger,
                 loss_fn = loss_fn,
-                X = X)
+                data_train = X,
+                data_test = data_test,
+                label_test = label_test,
+                data_query = data_query,
+                label_query = label_query,
+                model_saving_epoch = config.model_saving_epoch
+                )
