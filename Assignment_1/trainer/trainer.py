@@ -68,7 +68,7 @@ def train_model(
 
 if __name__ == "__main__":
 
-    debugger = MyDebugger('training_points_autoencoder', save_print_to_file =True)
+    debugger = MyDebugger('training_points_autoencoder', save_print_to_file = config.save_print_to_file)
     f = h5py.File('./data/train_data.h5')
     data_train = f['data'][:]  ### [9840, 2048, 3]
 
