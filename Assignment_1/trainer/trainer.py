@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.utils.data as Data
 import numpy as np
+import math
 import os
 from util.debugger import MyDebugger
 from torch.optim import Adam, Optimizer
@@ -81,11 +82,10 @@ def train_model(
 
     print("Training Done!!!")
 
-def query_shape(input_shape: torch.Tensor, data_matrix, top_k, model):
+def query_shape(input_shape: torch.Tensor, database_codes, top_k, model):
 
     input_shape = input_shape.unsqueeze(0)
     input_code = model[0](input_shape)[0]
-    database_codes = model[0](data_matrix)
     cos_distances = torch.mv(database_codes, input_code)
 
     ordered_indices = torch.argsort(cos_distances, descending = True)
@@ -96,8 +96,20 @@ def caculate_query_acc(input_shapes : torch.Tensor, data_matrix : torch.Tensor,
                        data_labels : np.array):
 
     accs = []
+
+    ### code matrix
+    batch_num = int(math.ceil(data_matrix.size(0) / config.batch_size))
+
+    matrix_codes = []
+    for i in range(batch_num):
+        data = data_matrix[i*config.batch_size:(i+1)*config.batch_size]
+        code = model[0](data)
+        matrix_codes.append(code)
+
+    matrix_codes = torch.stack(matrix_codes, dim = 0)
+
     for i in range(input_shapes.size(0)):
-        queried_indices = query_shape(input_shapes[i], data_matrix, top_k, model)
+        queried_indices = query_shape(input_shapes[i], matrix_codes, top_k, model)
         acc = np.mean([input_shapes_labels[i] == data_labels[idx] for idx in queried_indices])
         accs.append(acc)
 
@@ -134,5 +146,6 @@ if __name__ == "__main__":
                 data_query = data_query,
                 label_query = label_query,
                 model_saving_epoch = config.model_saving_epoch,
-                training_epoch = config.training_epoch
+                training_epoch = config.training_epoch,
+                batch_size = config.batch_size
                 )
