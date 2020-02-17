@@ -28,6 +28,12 @@ class FoldingNet_Decoder(nn.Module):
         self.x_y_samples = x_y_samples
         self.sample_range = sample_range
 
+        #### set up initial input to be (B, N, 2)
+        x_samples, y_samples = np.linspace(self.sample_range[0], self.sample_range[1], self.x_y_samples[0]), \
+                               np.linspace(self.sample_range[0], self.sample_range[1], self.x_y_samples[1])
+        samples = list(itertools.product(x_samples, y_samples))
+        self.grid_inputs = torch.from_numpy(np.array(samples)).float().to(device)
+
         self.forward_layers = nn.ModuleList([])
         for i in range(number_of_fold):
             feature_dims = [input_dimension + 2] + layers + [3] if i == 0 else [input_dimension + 3] + layers + [3]
@@ -44,12 +50,7 @@ class FoldingNet_Decoder(nn.Module):
         # batch process to make (B, 128) -> (B, N, 128)
         expanded_code = input_code.unsqueeze(1).repeat((1, self.number_of_points, 1))
 
-        #### set up initial input to be (B, N, 2)
-        x_samples, y_samples = np.linspace(self.sample_range[0], self.sample_range[1], self.x_y_samples[0]), \
-                               np.linspace(self.sample_range[0], self.sample_range[1], self.x_y_samples[1])
-        samples = list(itertools.product(x_samples, y_samples))
-        x = torch.from_numpy(np.array(samples)).float().to(device)
-        x = x.unsqueeze(0).repeat((batch_size, 1, 1))
+        x = self.grid_inputs.unsqueeze(0).repeat((batch_size, 1, 1))
 
         assert x.size(1) == self.number_of_points
 
