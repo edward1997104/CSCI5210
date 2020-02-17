@@ -94,7 +94,6 @@ def query_shape(input_shape: torch.Tensor, database_codes, top_k, model):
 def caculate_query_acc(input_shapes : torch.Tensor, data_matrix : torch.Tensor,
                        top_k : int, model : torch.nn.Module, input_shapes_labels : np.array,
                        data_labels : np.array):
-
     accs = []
 
     ### code matrix
@@ -106,7 +105,7 @@ def caculate_query_acc(input_shapes : torch.Tensor, data_matrix : torch.Tensor,
         code = model[0](data)
         matrix_codes.append(code)
 
-    matrix_codes = torch.stack(matrix_codes, dim = 0)
+    matrix_codes = torch.cat(matrix_codes, dim = 0)
 
     for i in range(input_shapes.size(0)):
         queried_indices = query_shape(input_shapes[i], matrix_codes, top_k, model)
