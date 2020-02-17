@@ -134,5 +134,5 @@ if __name__ == "__main__":
                 data_query = data_query,
                 label_query = label_query,
                 model_saving_epoch = config.model_saving_epoch,
-                training_epoch = training_epoch
+                training_epoch = config.training_epoch
                 )
