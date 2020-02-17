@@ -28,6 +28,12 @@ def CD_loss(x, y):
     losses = torch.max(torch.stack([min_l, min_r], dim = 1), dim = 1)[0]
     return torch.mean(losses)
 
+def CD_loss_avg(x, y):
+    min_l, min_r = nn_distance(x, y)
+    min_l, min_r = torch.mean(min_l, dim = -1), torch.mean(min_r, dim = -1)
+    losses = (min_l + min_r) / 2
+    return torch.mean(losses)
+
 def emd_approx(sample, ref):
     B, N, N_ref = sample.size(0), sample.size(1), ref.size(1)
     assert N == N_ref, "Not sure what would EMD do in this case"

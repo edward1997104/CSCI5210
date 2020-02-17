@@ -125,7 +125,6 @@ if __name__ == "__main__":
     model = config.current_model.to(device)
     loss_fn = config.loss_fn
 
-    print
     train_model(model = model,
                 debugger = debugger,
                 loss_fn = loss_fn,
