@@ -12,7 +12,7 @@ loss_fn = CD_loss
 
 ######### ARGS for folding Net decoder
 number_of_fold = 2
-x_y_samples = (64, 32)
+x_y_samples = (64, 64)
 sample_range = (-1, 1)
 
 ######### Model set-up
