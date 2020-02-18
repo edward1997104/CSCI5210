@@ -27,6 +27,7 @@ class FoldingNet_Decoder(nn.Module):
         self.number_of_fold = number_of_fold
         self.x_y_samples = x_y_samples
         self.sample_range = sample_range
+        self.x_y_samples_size = x_y_samples[0] * x_y_samples[1]
 
         #### set up initial input to be (B, N, 2)
         x_samples, y_samples = np.linspace(self.sample_range[0], self.sample_range[1], self.x_y_samples[0]), \
@@ -47,12 +48,12 @@ class FoldingNet_Decoder(nn.Module):
         # batch_size
         batch_size = input_code.size(0)
 
-        # batch process to make (B, 128) -> (B, N, 128)
-        expanded_code = input_code.unsqueeze(1).repeat((1, self.number_of_points, 1))
+        # batch process to make (B, 128) -> (B, M, 128)
+        expanded_code = input_code.unsqueeze(1).repeat((1, self.x_y_samples_size, 1))
 
         x = self.grid_inputs.unsqueeze(0).repeat((batch_size, 1, 1))
 
-        assert x.size(1) == self.number_of_points
+        assert x.size(1) == self.x_y_samples_size
 
 
         ### forward pass
