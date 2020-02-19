@@ -99,6 +99,7 @@ def train_model(
 
             ### get query results
             save_dir_query = os.path.join(save_dir_query_base, f'epoch_{epoch}')
+            os.mkdir(save_dir_query)
             query_acc = caculate_query_acc(input_shapes = data_query,
                                            data_matrix = data_test,
                                            top_k = config.top_k,
@@ -149,7 +150,6 @@ def caculate_query_acc(input_shapes : torch.Tensor, data_matrix : torch.Tensor,
 
     matrix_codes = torch.cat(matrix_codes, dim = 0)
 
-    data_matrix_numpy = data_matrix.cpu().detach().numpy()
     for i in range(input_shapes.size(0)):
         queried_indices = query_shape(input_shapes[i], matrix_codes, top_k, model)
         acc = np.mean([input_shapes_labels[i] == data_labels[idx] for idx in queried_indices])
