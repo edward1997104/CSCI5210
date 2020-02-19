@@ -13,6 +13,9 @@ import h5py
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+with open('./data/shape_names.txt') as f:
+    label_names = f.readlines()
+
 def train_model(
           model : nn.Module,
           loss_fn,
@@ -155,10 +158,10 @@ def caculate_query_acc(input_shapes : torch.Tensor, data_matrix : torch.Tensor,
         acc = np.mean([input_shapes_labels[i] == data_labels[idx] for idx in queried_indices])
         accs.append(acc)
 
-        save_dir = os.path.join(save_base, f'{i}')
+        save_dir = os.path.join(save_base, f'{label_names[input_shapes_labels[i]]}_{i}')
         os.mkdir(save_dir)
         for idx in queried_indices:
-            write_point_cloud(data_matrix[idx], os.path.join(save_dir, f'{idx}.obj'))
+            write_point_cloud(data_matrix[idx], os.path.join(save_dir, f'{label_names[data_labels[idx]]}_{idx}.obj'))
 
     return np.mean(accs)
 
