@@ -167,19 +167,24 @@ def calculate_loss(X, model, loss_fn):
     ### code matrix
     batch_num = int(math.ceil(X.size(0) / config.batch_size))
     X_reconstructed = []
+
+    EMD_losses = []
     for i in range(batch_num):
-        X_temp = model(X[i*config.batch_size:(i+1)*config.batch_size]).detach()
+        X_data = X[i*config.batch_size:(i+1)*config.batch_size]
+        X_temp = model(X_data).detach()
         X_reconstructed.append(X_temp)
+
+        ### EMD loss
+        EMD_loss = torch.mean(emd_approx(X_temp, X_data)).detach().cpu().numpy()
+        EMD_losses.append(EMD_loss)
 
     X_reconstructed = torch.cat(X_reconstructed, dim = 0)
 
     testing_loss = loss_fn(X_reconstructed, X).detach().cpu().numpy()
     torch.cuda.empty_cache()
     CD_loss = CD_loss_avg(X_reconstructed, X).detach().cpu().numpy()
-    torch.cuda.empty_cache()
-    EMD_loss = torch.mean(emd_approx(X_reconstructed, X)).detach().cpu().numpy()
-    torch.cuda.empty_cache()
-    return testing_loss, CD_loss, EMD_loss
+
+    return testing_loss, CD_loss, np.mean(EMD_losses)
 
 def save_reconstructed_point(X, model, save_dir):
     batch_num = int(math.ceil(X.size(0) / config.batch_size))
