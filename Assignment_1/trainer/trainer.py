@@ -173,9 +173,13 @@ def calculate_loss(X, model, loss_fn):
 
     X_reconstructed = torch.cat(X_reconstructed, dim = 0)
 
-    return loss_fn(X_reconstructed, X).detach().cpu().numpy(),\
-           CD_loss_avg(X_reconstructed, X).detach().cpu().numpy(),\
-           torch.mean(emd_approx(X_reconstructed, X)).detach().cpu().numpy()
+    testing_loss = loss_fn(X_reconstructed, X).detach().cpu().numpy()
+    torch.cuda.empty_cache()
+    CD_loss = CD_loss_avg(X_reconstructed, X).detach().cpu().numpy()
+    torch.cuda.empty_cache()
+    EMD_loss = torch.mean(emd_approx(X_reconstructed, X)).detach().cpu().numpy()
+    torch.cuda.empty_cache()
+    return testing_loss, CD_loss, EMD_loss
 
 def save_reconstructed_point(X, model, save_dir):
     batch_num = int(math.ceil(X.size(0) / config.batch_size))
