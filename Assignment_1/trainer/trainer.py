@@ -173,7 +173,9 @@ def calculate_loss(X, model, loss_fn):
 
     X_reconstructed = torch.cat(X_reconstructed, dim = 0)
 
-    return loss_fn(X_reconstructed, X), CD_loss_avg(X_reconstructed, X), emd_approx(X_reconstructed, X)
+    return loss_fn(X_reconstructed, X).detach().cpu().numpy(),\
+           CD_loss_avg(X_reconstructed, X).detach().cpu().numpy(),\
+           torch.mean(emd_approx(X_reconstructed, X)).detach().cpu().numpy()
 
 def save_reconstructed_point(X, model, save_dir):
     batch_num = int(math.ceil(X.size(0) / config.batch_size))
