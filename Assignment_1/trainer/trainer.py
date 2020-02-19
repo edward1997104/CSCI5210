@@ -216,6 +216,7 @@ if __name__ == "__main__":
     data_query = f['data'][:]  ###
     data_query = torch.from_numpy(data_query).float().to(device)
     label_query =  np.squeeze(f['label'])
+    f.close()
 
     model = config.current_model.to(device)
     loss_fn = config.loss_fn
