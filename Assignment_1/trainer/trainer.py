@@ -210,12 +210,12 @@ if __name__ == "__main__":
     data_test = f['data'][:]  ###
     write_point_cloud(data_test[0], debugger.file_path('testing.obj'))
     data_test = torch.from_numpy(data_test).float().to(device)
-    label_test = f['label']
+    label_test = np.squeeze(f['label'])
 
     f = h5py.File('./data/query_data.h5')
     data_query = f['data'][:]  ###
     data_query = torch.from_numpy(data_query).float().to(device)
-    label_query = f['label']
+    label_query =  np.squeeze(f['label'])
 
     model = config.current_model.to(device)
     loss_fn = config.loss_fn

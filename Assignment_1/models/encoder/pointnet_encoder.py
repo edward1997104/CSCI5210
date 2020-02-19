@@ -40,6 +40,8 @@ if __name__ == '__main__' :
     f = h5py.File('./data/train_data.h5')
     data_train = f['data'][:]  ### [9840, 2048, 3]
 
+    print(f['label'].shape)
+
     X = torch.from_numpy(data_train[:32]).float().to(device)
 
     X_code = encoder(X)
