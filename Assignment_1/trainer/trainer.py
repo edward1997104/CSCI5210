@@ -81,7 +81,7 @@ def train_model(
         print(f"training loss for epoch {epoch} : {np.mean(training_losses)}")
 
         ### testing losss
-        testing_loss, CD_loss, EMD_loss = calculate_loss(data_test, model, loss_fn).detach().cpu().numpy()
+        testing_loss, CD_loss, EMD_loss = calculate_loss(data_test, model, loss_fn)
         print(f"testing loss for epoch {epoch} : {testing_loss} {CD_loss} {EMD_loss}")
 
         if testing_loss < min_testing_loss:
