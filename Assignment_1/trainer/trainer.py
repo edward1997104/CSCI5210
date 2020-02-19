@@ -140,7 +140,7 @@ def calculate_loss(X, model, loss_fn):
     batch_num = int(math.ceil(X.size(0) / config.batch_size))
     X_reconstructed = []
     for i in range(batch_num):
-        X_temp = model(X[i*config.batch_size:(i+1)*config.batch_size])
+        X_temp = model(X[i*config.batch_size:(i+1)*config.batch_size]).detach()
         X_reconstructed.append(X_temp)
 
     X_reconstructed = torch.cat(X_reconstructed, dim = 0)
