@@ -194,7 +194,7 @@ def save_reconstructed_point(X, model, save_dir, label):
     for i in range(batch_num):
         X_temp = model(X[i*config.batch_size:(i+1)*config.batch_size]).detach().cpu().numpy()
         for j in range(X_temp.shape[0]):
-            write_point_cloud(X_temp[0], os.path.join(save_dir, f'{i*config.batch_size+j}_{label[i*config.batch_size+j]}.obj'))
+            write_point_cloud(X_temp[0], os.path.join(save_dir, f'{i*config.batch_size+j}_{label_names[label[i*config.batch_size+j]]}.obj'))
 
 if __name__ == "__main__":
 
