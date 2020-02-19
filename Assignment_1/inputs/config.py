@@ -35,7 +35,7 @@ current_model = nn.Sequential(
 
 
 ####################### DEBUG
-debug_base_folder = '/data/edward/debug'
+debug_base_folder = '/data/edward/CSCI5210/debug'
 save_print_to_file = True
 top_k = 5
 model_saving_epoch = 20
