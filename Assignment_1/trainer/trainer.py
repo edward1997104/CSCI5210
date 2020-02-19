@@ -96,7 +96,7 @@ def train_model(
             ### save reconstruction on testing data
             save_dir_reconstruction = os.path.join(save_dir_reconstruction_base, f'epoch_{epoch}')
             os.mkdir(save_dir_reconstruction)
-            save_reconstructed_point(data_test, model, save_dir_reconstruction)
+            save_reconstructed_point(data_test, model, save_dir_reconstruction, label_test)
 
             torch.save(model, os.path.join(save_dir_models, f'{epoch}_model.pth'))
 
@@ -158,10 +158,10 @@ def caculate_query_acc(input_shapes : torch.Tensor, data_matrix : torch.Tensor,
         acc = np.mean([input_shapes_labels[i] == data_labels[idx] for idx in queried_indices])
         accs.append(acc)
 
-        save_dir = os.path.join(save_base, f'{label_names[input_shapes_labels[i]]}_{i}')
+        save_dir = os.path.join(save_base, f'{i}_{label_names[input_shapes_labels[i]]}')
         os.mkdir(save_dir)
         for idx in queried_indices:
-            write_point_cloud(data_matrix[idx], os.path.join(save_dir, f'{label_names[data_labels[idx]]}_{idx}.obj'))
+            write_point_cloud(data_matrix[idx], os.path.join(save_dir, f'{idx}_{label_names[data_labels[idx]]}.obj'))
 
     return np.mean(accs)
 
@@ -189,12 +189,12 @@ def calculate_loss(X, model, loss_fn):
 
     return testing_loss, CD_loss, np.mean(EMD_losses)
 
-def save_reconstructed_point(X, model, save_dir):
+def save_reconstructed_point(X, model, save_dir, label):
     batch_num = int(math.ceil(X.size(0) / config.batch_size))
     for i in range(batch_num):
         X_temp = model(X[i*config.batch_size:(i+1)*config.batch_size]).detach().cpu().numpy()
         for j in range(X_temp.shape[0]):
-            write_point_cloud(X_temp[0], os.path.join(save_dir, f'{i*config.batch_size+j}.obj'))
+            write_point_cloud(X_temp[0], os.path.join(save_dir, f'{i*config.batch_size+j}_{label[i*config.batch_size+j]}.obj'))
 
 if __name__ == "__main__":
 
