@@ -114,6 +114,8 @@ def query_shape(input_shape: torch.Tensor, database_codes, top_k, model):
 def caculate_query_acc(input_shapes : torch.Tensor, data_matrix : torch.Tensor,
                        top_k : int, model : torch.nn.Module, input_shapes_labels : np.array,
                        data_labels : np.array):
+    ## clean up
+    torch.cuda.empty_cache()
     accs = []
 
     ### code matrix
