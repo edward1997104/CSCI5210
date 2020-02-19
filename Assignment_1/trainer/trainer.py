@@ -25,7 +25,8 @@ def train_model(
           training_epoch : int =200 ,
           model_saving_epoch : int = 20,
           data_loading_workers : int = 4,
-          optimizer_type = Adam):
+          optimizer_type = Adam,
+          tolerance_epoch = 5):
     print("Training Start!!!", flush=True)
 
     #### optimizer
@@ -41,6 +42,10 @@ def train_model(
         shuffle=True,
         num_workers= data_loading_workers,
     )
+
+    #### for early stopping
+    min_testing_loss = float("inf")
+    tolerance_cnt = 0
 
     for epoch in range(training_epoch):
 
@@ -58,9 +63,18 @@ def train_model(
 
             # print(f"loss for epoch {epoch} stpe {step} : {loss.item()}")
 
-        print(f"loss for epoch {epoch} : {np.mean(training_losses)}")
+        print(f"training loss for epoch {epoch} : {np.mean(training_losses)}")
 
-        if (epoch+1) % model_saving_epoch == 0:
+        ### testing losss
+        testing_loss = calculate_loss(data_test, model, loss_fn).detach().cpu().numpy()
+        print(f"testing loss for epoch {epoch} : {testing_loss}")
+
+        if testing_loss < min_testing_loss:
+
+            ### reset tolerance
+            min_testing_loss = testing_loss
+            tolerance_cnt = 0
+
             save_dir = debugger.file_path('models')
             if not os.path.isdir(save_dir):
                 os.mkdir(save_dir)
@@ -74,6 +88,12 @@ def train_model(
                                            data_labels = label_test)
 
             print(f"average query acc : {query_acc}")
+        else:
+            tolerance_cnt += 1
+
+            #### end the training if no more improvement
+            if tolerance_cnt == tolerance_epoch:
+                break
 
 
 
@@ -113,6 +133,20 @@ def caculate_query_acc(input_shapes : torch.Tensor, data_matrix : torch.Tensor,
         accs.append(acc)
 
     return np.mean(accs)
+
+def calculate_loss(X, model, loss_fn):
+
+    ### code matrix
+    batch_num = int(math.ceil(X.size(0) / config.batch_size))
+    X_reconstructed = []
+    for i in range(batch_num):
+        X_temp = model(X[i*config.batch_size:(i+1)*config.batch_size])
+        X_reconstructed.append(X_temp)
+
+    X_reconstructed = torch.cat(X_reconstructed, dim = 0)
+
+    return loss_fn(X_reconstructed, X)
+
 if __name__ == "__main__":
 
     debugger = MyDebugger('training_points_autoencoder', save_print_to_file = config.save_print_to_file)
@@ -146,5 +180,6 @@ if __name__ == "__main__":
                 label_query = label_query,
                 model_saving_epoch = config.model_saving_epoch,
                 training_epoch = config.training_epoch,
-                batch_size = config.batch_size
+                batch_size = config.batch_size,
+                tolerance_epoch = config.tolerance_epoch
                 )

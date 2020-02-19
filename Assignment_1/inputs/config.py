@@ -38,3 +38,4 @@ top_k = 5
 model_saving_epoch = 20
 training_epoch = 200
 batch_size = 32
+tolerance_epoch = 5
