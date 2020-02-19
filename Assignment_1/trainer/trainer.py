@@ -8,6 +8,7 @@ from util.debugger import MyDebugger
 from torch.optim import Adam, Optimizer
 from inputs import config
 from util.points_util import write_point_cloud
+from metrics.evaluation_metrics import CD_loss_avg, emd_approx
 import h5py
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -48,6 +49,19 @@ def train_model(
     min_testing_loss = float("inf")
     tolerance_cnt = 0
 
+    ##### different folders
+    save_dir_models = debugger.file_path('models')
+    if not os.path.isdir(save_dir_models):
+        os.mkdir(save_dir_models)
+
+    save_dir_reconstruction_base = debugger.file_path('reconstruction')
+    if not os.path.isdir(save_dir_reconstruction_base):
+        os.mkdir(save_dir_reconstruction_base)
+
+    save_dir_query_base = debugger.file_path('query')
+    if not os.path.isdir(save_dir_query_base):
+        os.mkdir(save_dir_query_base)
+
     for epoch in range(training_epoch):
 
         training_losses = []
@@ -67,8 +81,8 @@ def train_model(
         print(f"training loss for epoch {epoch} : {np.mean(training_losses)}")
 
         ### testing losss
-        testing_loss = calculate_loss(data_test, model, loss_fn).detach().cpu().numpy()
-        print(f"testing loss for epoch {epoch} : {testing_loss}")
+        testing_loss, CD_loss, EMD_loss = calculate_loss(data_test, model, loss_fn).detach().cpu().numpy()
+        print(f"testing loss for epoch {epoch} : {testing_loss} {CD_loss} {EMD_loss}")
 
         if testing_loss < min_testing_loss:
 
@@ -76,17 +90,22 @@ def train_model(
             min_testing_loss = testing_loss
             tolerance_cnt = 0
 
-            save_dir = debugger.file_path('models')
-            if not os.path.isdir(save_dir):
-                os.mkdir(save_dir)
-            torch.save(model, os.path.join(save_dir, f'{epoch}_model.pth'))
+            ### save reconstruction on testing data
+            save_dir_reconstruction = os.path.join(save_dir_reconstruction_base, f'epoch_{epoch}')
+            os.mkdir(save_dir_reconstruction)
+            save_reconstructed_point(data_test, model, save_dir_reconstruction)
 
+            torch.save(model, os.path.join(save_dir_models, f'{epoch}_model.pth'))
+
+            ### get query results
+            save_dir_query = os.path.join(save_dir_query_base, f'epoch_{epoch}')
             query_acc = caculate_query_acc(input_shapes = data_query,
                                            data_matrix = data_test,
                                            top_k = config.top_k,
                                            model = model,
                                            input_shapes_labels = label_query,
-                                           data_labels = label_test)
+                                           data_labels = label_test,
+                                           save_base = save_dir_query)
 
             print(f"average query acc : {query_acc}")
         else:
@@ -114,7 +133,7 @@ def query_shape(input_shape: torch.Tensor, database_codes, top_k, model):
 
 def caculate_query_acc(input_shapes : torch.Tensor, data_matrix : torch.Tensor,
                        top_k : int, model : torch.nn.Module, input_shapes_labels : np.array,
-                       data_labels : np.array):
+                       data_labels : np.array, save_base : str):
     ## clean up
     torch.cuda.empty_cache()
     accs = []
@@ -130,10 +149,16 @@ def caculate_query_acc(input_shapes : torch.Tensor, data_matrix : torch.Tensor,
 
     matrix_codes = torch.cat(matrix_codes, dim = 0)
 
+    data_matrix_numpy = data_matrix.cpu().detach().numpy()
     for i in range(input_shapes.size(0)):
         queried_indices = query_shape(input_shapes[i], matrix_codes, top_k, model)
         acc = np.mean([input_shapes_labels[i] == data_labels[idx] for idx in queried_indices])
         accs.append(acc)
+
+        save_dir = os.path.join(save_base, f'{i}')
+        os.mkdir(save_dir)
+        for idx in queried_indices:
+            write_point_cloud(data_matrix[idx], os.path.join(save_dir, f'{idx}.obj'))
 
     return np.mean(accs)
 
@@ -148,7 +173,14 @@ def calculate_loss(X, model, loss_fn):
 
     X_reconstructed = torch.cat(X_reconstructed, dim = 0)
 
-    return loss_fn(X_reconstructed, X)
+    return loss_fn(X_reconstructed, X), CD_loss_avg(X_reconstructed, X), emd_approx(X_reconstructed, X)
+
+def save_reconstructed_point(X, model, save_dir):
+    batch_num = int(math.ceil(X.size(0) / config.batch_size))
+    for i in range(batch_num):
+        X_temp = model(X[i*config.batch_size:(i+1)*config.batch_size]).detach().cpu().numpy()
+        for j in range(X_temp.shape[0]):
+            write_point_cloud(X_temp[0], os.path.join(save_dir, f'{i*config.batch_size+j}.obj'))
 
 if __name__ == "__main__":
 
