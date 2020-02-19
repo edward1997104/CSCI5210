@@ -7,6 +7,7 @@ import os
 from util.debugger import MyDebugger
 from torch.optim import Adam, Optimizer
 from inputs import config
+from util.points_util import write_point_cloud
 import h5py
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -161,6 +162,7 @@ if __name__ == "__main__":
     #### testing data + query data
     f = h5py.File('./data/test_data.h5')
     data_test = f['data'][:]  ###
+    write_point_cloud(data_test[0], debugger.file_path('testing.obj'))
     data_test = torch.from_numpy(data_test).float().to(device)
     label_test = f['label']
 
