@@ -124,7 +124,7 @@ def caculate_query_acc(input_shapes : torch.Tensor, data_matrix : torch.Tensor,
     matrix_codes = []
     for i in range(batch_num):
         data = data_matrix[i*config.batch_size:(i+1)*config.batch_size]
-        code = model[0](data)
+        code = model[0](data).detach()
         matrix_codes.append(code)
 
     matrix_codes = torch.cat(matrix_codes, dim = 0)
