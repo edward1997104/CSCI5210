@@ -1,4 +1,5 @@
 from models.encoder.pointnet_encoder import PointNet_Encoder
+from models.encoder.pcn_encoder import PCN_encoder
 from models.decoder.pointnet_decoder import PointNet_Decoder
 from models.decoder.foldingnet_decoder import FoldingNet_Decoder
 import torch.nn as nn
@@ -18,8 +19,10 @@ sample_range = (-1, 1)
 ######### Model set-up
 
 current_model = nn.Sequential(
-    PointNet_Encoder(layers = encoder_layers,
-                     activation = activation),
+    PCN_encoder(layers=encoder_layers,
+                     activation=activation),
+    # PointNet_Encoder(layers = encoder_layers,
+    #                  activation = activation),
     # PointNet_Decoder(layers = decoder_layers,
     #                  activation = activation)
     FoldingNet_Decoder(layers=decoder_layers,
