@@ -208,7 +208,9 @@ if __name__ == "__main__":
     #### testing data + query data
     f = h5py.File('./data/test_data.h5')
     data_test = f['data'][:]  ###
-    write_point_cloud(data_test[0], debugger.file_path('testing.obj'))
+
+    for i in range(data_test.shape[0]):
+        write_point_cloud(data_test[i], debugger.file_path(f'testing_{i}.obj'))
     data_test = torch.from_numpy(data_test).float().to(device)
     label_test = np.squeeze(f['label'])
 
