@@ -209,8 +209,6 @@ if __name__ == "__main__":
     f = h5py.File('./data/test_data.h5')
     data_test = f['data'][:]  ###
 
-    for i in range(data_test.shape[0]):
-        write_point_cloud(data_test[i], debugger.file_path(f'testing_{i}.obj'))
     data_test = torch.from_numpy(data_test).float().to(device)
     label_test = np.squeeze(f['label'])
 
@@ -219,6 +217,10 @@ if __name__ == "__main__":
     data_query = torch.from_numpy(data_query).float().to(device)
     label_query =  np.squeeze(f['label'])
     f.close()
+
+    ### query
+    for i in range(data_query.shape[0]):
+        write_point_cloud(data_query[i], debugger.file_path(f'testing_{i}.obj'))
 
     model = config.current_model.to(device)
     loss_fn = config.loss_fn
